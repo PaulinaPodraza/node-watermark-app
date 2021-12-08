@@ -1,11 +1,12 @@
 const Jimp = require('jimp');
 const inquirer = require('inquirer');
+const fs = require('fs');
 
 const addTextWatermarkToImage = async function(inputFile, outputFile, text) {
   const image = await Jimp.read(inputFile);
   const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
   const textData = {
-    text,
+    text: text,
     alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
     alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
   };
@@ -54,27 +55,43 @@ const startApp = async () => {
     name: 'watermarkType',
     type: 'list',
     choices: ['Text watermark', 'Image watermark'],
-    }]);
+  }]);
 
   if(options.watermarkType === 'Text watermark') {
-  const text = await inquirer.prompt([{
-    name: 'value',
-    type: 'input',
-    message: 'Type your watermark text:',
-  }]);
-  options.watermarkText = text.value;
-  addTextWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), options.watermarkText);
-}
-else {
-  const image = await inquirer.prompt([{
-    name: 'filename',
-    type: 'input',
-    message: 'Type your watermark name:',
-    default: 'logo.png',
-  }])
-  options.watermarkImage = image.filename;
-  addImageWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), './img/' + options.watermarkImage);
-}
-}
+    const text = await inquirer.prompt([{
+      name: 'value',
+      type: 'input',
+      message: 'Type your watermark text:',
+    }])
+    options.watermarkText = text.value;
+    if (existsSync('./img/' + options.inputImage)) {
+        addTextWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), options.watermarkText);
+      console.log('The file has been found');
+    }
+    else {
+      console.log('Something went wrong... Try again')
+    }
+  }
+  else {
+    const image = await inquirer.prompt([{
+      name: 'filename',
+      type: 'input',
+      message: 'Type your watermark name:',
+      default: 'logo.png',
+    }])
+    options.watermarkImage = image.filename;
+
+    if (fs.existsSync('./img/' + options.inputImage && './img/' + options.watermarkImage)) {
+      addImageWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), './img/' + options.watermarkImage);
+      console.log('The files have been found');
+    } else {
+      console.log('Something went wrong... Try again')
+      process.exit();
+    }
+  }
+  console.log("The operation is completed");
+  startApp();
+
+};
 
 startApp();
